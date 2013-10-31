@@ -13,8 +13,11 @@
 
 #pragma link C++ class TGlobalData+;
 #pragma link C++ class TPulseIsland+;
+#pragma link C++ class TTrackerHit+;
+#pragma link C++ class TEvent+
 #pragma link C++ class std::vector<TPulseIsland*>+;
 #pragma link C++ class std::vector<TPulseIsland*>::iterator;
+#pragma link C++ class std::vector<TTrackerHit>+;
 #pragma link C++ function operator!= (std::vector<TPulseIsland*>::iterator, std::vector<TPulseIsland*>::iterator);
 #pragma link C++ class std::map<std::string, std::vector<TPulseIsland*> >+;
 #pragma link C++ class std::map<std::string, std::vector<TPulseIsland*> >::iterator;
