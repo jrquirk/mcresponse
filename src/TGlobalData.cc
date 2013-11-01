@@ -1,1 +1,4 @@
-/home/jrquirk/alcap/AlcapDAQ/analyzer/src/common/TGlobalData.cpp
+#include "TGlobalData.hh"
+
+ClassImp(TGlobalData)
+
