@@ -8,8 +8,8 @@
 #include "TFile.h"
 #include "TRandom3.h"
 
-#include "rootlibs/TTrackerHit.h"
-#include "rootlibs/TEvent.h"
+#include "TTrackerHit.hh"
+#include "TEvent.hh"
 
 #include "TGlobalData.hh"
 #include "TPulseIsland.hh"
