@@ -19,10 +19,10 @@
 #include <utility>
 #include <iostream>
 
-std::vector<int> RangeToList(std::string);
 void ClearVectorTPI(std::vector<TPulseIsland*>& v);
 void TimeOrderTPI(std::vector<TPulseIsland*>& v);
 void MergeTPI(std::vector<TPulseIsland*>& v);
+void producemcdata(TChain*, TString);
 
 int main(int argc, char* argv[]) {
 
@@ -31,16 +31,45 @@ int main(int argc, char* argv[]) {
 			false);
 	args.Register("h", "help", "", "Print help message and exit.", false,
 			false);
-	args.Register("r", "runs", "", "Runs to produce data for.", true, true);
+	args.Register("r", "runs", "", "Runs to produce data for. (ex: 203-567,1002,2700-3199)", true, true);
 	args.Register("d", "detectors", "", "Detector text file to use.", true,
 			false);
+	args.Register("f", "runlist", "", "Test file with runlist to load.", true,
+			false);
+	args.Register("o", "output-file", "mcdata.root",
+			"Output file name for pseudo-data.", true, false);
 	args.Parse(argc, argv);
-	args.Print();
+
+	// Asked for help or error
+	if (args.Enabled("h") || args.Enabled("help") || args.Enabled("usage")) {
+		args.Print();
+		return 0;
+	}
+	if (!args.Valid()) {
+		std::cout << "Argument error!" << std::endl;
+		args.Print();
+		return 1;
+	}
+
+	std::string runs = args.Get("r");
+	std::string ofname = args.Get("o");
+	MCFileHandler files;
+	if (!files.Register(runs)) {
+		std::cout << "Could not register runs!" << std::endl;
+		return 2;
+	}
+	files.Load();
+
+	std::cout << "Output file: " << ofname << "." << std::endl;
+
+	TChain* runchain = files.GetEventChain();
+	producemcdata(runchain, TString(ofname));
+
+	std::cout << "Succesfully reached the end of the program!" << std::endl;
 	return 0;
 }
 
-void producemcdata(TString infnames = "output/run01003.root",
-		TString ofilename = "test.root", int nmax = 999999999) {
+void producemcdata(TChain* mcevents, TString ofname) {
 
 	// Parameters
 	const double beamtau = 100000.; // ns, 10 kHz beam
@@ -54,15 +83,15 @@ void producemcdata(TString infnames = "output/run01003.root",
 	std::vector<int> *d, *p;
 
 	// Prepare input
-	TChain mcevents("t");
-	mcevents.Add(infnames);
-	mcevents.SetBranchStatus("*", 0);
-	mcevents.SetBranchStatus("evt", 1);
-	mcevents.SetBranchAddress("evt", &ev);
+	mcevents->SetBranchStatus("*", 0);
+	mcevents->SetBranchStatus("evt", 1);
+	mcevents->SetBranchAddress("evt", &ev);
 
 	// Prepare output
-	TFile ofile(ofilename, "RECREATE");
+	TFile ofile(ofname, "RECREATE");
 	TTree mcdata("EventTree", "All MC Events");
+	TTree mctruth("TruthTree_INCOMPLETE",
+			"Truth Information (Not Yet Implemented)");
 	mcdata.Branch("Event", "TGlobalData", &gData, 64000, 1);
 	std::vector<TPulseIsland*> musc, musca, targ_f, targ_s, veto, sil1_f,
 			sil1_s, sil2_f, sil2_s, scl, sir1_f, sir1_s, sir2_f, sir2_s, scr;
@@ -80,9 +109,7 @@ void producemcdata(TString infnames = "output/run01003.root",
 	sc.SetCalibration(5.);
 
 	TRandom3 randtime;
-	int nEvt = mcevents.GetEntries();
-	if (nEvt > nmax)
-		nEvt = nmax;
+	int nEvt = mcevents->GetEntries();
 	int nEDeps = 0;
 
 	int det;
@@ -174,7 +201,6 @@ void producemcdata(TString infnames = "output/run01003.root",
 					std::pair<std::string, std::vector<TPulseIsland*> >("MC11",
 							musca));
 			mcdata.Fill();
-			mcdata.Write();
 			// Clear data for reuse
 			eventtimestamp = 0.;
 			gData->fPulseIslandToChannelMap.clear();
@@ -196,7 +222,7 @@ void producemcdata(TString infnames = "output/run01003.root",
 			ClearVectorTPI(scr);
 		}
 		eventtimestamp += randtime.Exp(beamtau);
-		mcevents.GetEntry(iEvt);
+		mcevents->GetEntry(iEvt);
 		nEDeps = ev->GetDetectorResponse(&p, &d, &e, &t);
 		for (int iDep = 0; iDep < nEDeps; iDep++) {
 			det = d->at(iDep);
@@ -284,6 +310,7 @@ void producemcdata(TString infnames = "output/run01003.root",
 			}
 		}
 	}
+	mcdata.Write();
 }
 
 void ClearVectorTPI(std::vector<TPulseIsland*>& v) {
