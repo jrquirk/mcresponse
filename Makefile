@@ -36,6 +36,6 @@ $(SRCDIR)/T%Dict.cc:
 	@rootcint $@ -c -f $(CCFLAGS) $(patsubst $(SRCDIR)/%Dict.cc,$(INCDIR)/%.hh,$@)
 
 clean:
-	-rm -f $(OBJLOC) *.o
+	-rm -f $(OBJDIR)/*.o
 	-rm -f $(SRCDIR)/*Dict* $(SRCDIR)/*.d $(INCDIR)/*.d
 	-rm -f $(NAME)

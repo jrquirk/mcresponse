@@ -7,8 +7,9 @@
 #include <string>
 #include <vector>
 
-MCFileHandler::MCFileHandler() : fLoaded(false), fPath("output/"), fPreName("run"),
-				 fNRuns(0), fRuns(), fBadRuns(), fEvents("t") {
+MCFileHandler::MCFileHandler() :
+		fLoaded(false), fPath("output/"), fPreName("run"), fNRuns(0), fRuns(), fBadRuns(), fEvents(
+				"t") {
 }
 
 MCFileHandler::~MCFileHandler() {
@@ -39,7 +40,7 @@ bool MCFileHandler::Register(std::string runs) {
 		listpos = runs.find(fListSep);
 		if (listpos < rangepos) {
 			run = (unsigned int) atoi(runs.c_str());
-			if(!Register(run))
+			if (!Register(run))
 				return false;
 			runs.erase(0, listpos + 1);
 		} else if (rangepos < listpos) {
@@ -47,9 +48,12 @@ bool MCFileHandler::Register(std::string runs) {
 			runs.erase(0, rangepos + 1);
 			hRun = atoi(runs.c_str());
 			runs.erase(0, runs.find(fListSep) + 1);
-			if(!Register(lRun,hRun))
+			if (!Register(lRun, hRun))
 				return false;
 		} else {
+			run = (unsigned int) atoi(runs.c_str());
+			if (!Register(run))
+				return false;
 			runs.erase(0);
 		}
 	}
@@ -63,25 +67,28 @@ bool MCFileHandler::RegisterFile(std::string) {
 void MCFileHandler::Load() {
 	if (fLoaded)
 		return;
-	
-	fLoaded = true;
-	
+
 	std::string rfname;
-	for(unsigned int iRun = 0; iRun < fRuns.size(); iRun++) {
-		rfname = GetRunFileName(iRun);
-		if(RunFileExists(rfname)) {
+	for (unsigned int iRun = 0; iRun < fRuns.size(); iRun++) {
+		rfname = GetRunFileName(fRuns[iRun]);
+		std::cout << "Attempting to load " << rfname << "...";
+		if (RunFileExists(rfname)) {
 			fEvents.Add(rfname.c_str());
 			fNRuns++;
+			std::cout << "loaded." << std::endl;
 		} else {
 			fBadRuns.push_back(iRun);
+			std::cout << "NOT FOUND!" << std::endl;
 		}
 	}
+
+	fLoaded = true;
 }
 
 std::string MCFileHandler::GetRunFileName(unsigned int run) {
-  char runname[6];
-  sprintf(runname, "%.5u", run);
-  return (fPath + fPreName + std::string(runname) + fExtension);
+	char runname[6];
+	sprintf(runname, "%.5u", run);
+	return (fPath + fPreName + std::string(runname) + fExtension);
 }
 
 void MCFileHandler::SetPath(std::string& path) {

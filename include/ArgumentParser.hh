@@ -41,15 +41,18 @@ public:
 
 	bool Enabled(std::string&);
 	std::string Get(std::string&);
+	bool Enabled(const char*);
+	std::string Get(const char*);
 
 	void Print();
 
 private:
 	// Short, Long
 	bool CheckArguments(std::string&,std::string&);
-	bool IsShort(std::string&);
-	bool IsLong(std::string&);
 	void Validate();
+	static bool IsShort(std::string&);
+	static bool IsLong(std::string&);
+	static void Strip(std::string&);
 };
 
 #endif
