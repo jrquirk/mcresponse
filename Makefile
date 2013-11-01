@@ -7,7 +7,7 @@ CC = g++
 CCFLAGS += -g -Wall
 CCFLAGS += -Iinclude -Irootlibs
 CCFLAGS += $(shell $(ROOTSYS)/bin/root-config --cflags)
-LDLIBS += $(shell $(ROOTSYS)/bin/root-config --glibs)
+LDLIBS += $(shell $(ROOTSYS)/bin/root-config --libs)
 
 TDICT = TObjDict
 TDICTSRC = $(TDICT).cc
