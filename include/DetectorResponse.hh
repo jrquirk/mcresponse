@@ -102,7 +102,7 @@ public:
 	}
 	void SetNBits(int n) {
 		fNBits = n;
-		fMaxADC = (int) std::pow(2, n) - 1;
+		fMaxADC = (int) std::pow(2., n) - 1;
 	}
 	int GetNBits() {
 		return fNBits;
