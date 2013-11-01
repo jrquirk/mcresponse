@@ -36,7 +36,7 @@ void DetectorResponse::SetDigitizationProperties(double f, double e, int nb,
 	fTickLength = 1. / f;
 	fMaxEnergy = e;
 	fNBits = nb;
-	fMaxADC = (int) std::pow(2, nb) - 1;
+	fMaxADC = (int) std::pow(2., nb) - 1;
 	fPedestal = p;
 	fNSamples = ns;
 	fNPreSamples = nps;
