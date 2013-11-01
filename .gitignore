@@ -3,10 +3,6 @@ src/obj/*
 *.o
 *.so
 
-# Scripting
-scripts/*
-rootlibs/*
-
 # Dictionaries
 *Dict*
 *.d
