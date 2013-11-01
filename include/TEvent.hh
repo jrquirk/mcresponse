@@ -9,7 +9,7 @@
 #ifndef TEVENT_5C88AHBF
 #define TEVENT_5C88AHBF
 
-#include "TTrackerHit.h"
+#include "TTrackerHit.hh"
 #include "TObject.h"
 #include "TH1D.h"
 #include "Rtypes.h"
