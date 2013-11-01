@@ -1,0 +1,14 @@
+# Compiled Source
+*.o
+*.so
+
+# Scripting
+scripts/*
+rootlibs/*
+
+# Dictionaries
+*Dict*
+*.d
+
+# Backups
+*~
