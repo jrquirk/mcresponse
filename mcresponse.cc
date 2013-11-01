@@ -31,10 +31,10 @@ int main(int argc, char* argv[]) {
 			false);
 	args.Register("h", "help", "", "Print help message and exit.", false,
 			false);
-	args.Register("r", "runs", "", "Runs to produce data for. (ex: 203-567,1002,2700-3199)", true, true);
-	args.Register("d", "detectors", "", "Detector text file to use.", true,
+	args.Register("r", "runs", "", "Comma/Dash separated list of MC runs to produce data for. (ex: 203-567,1002,2700-3199)", true, true);
+	args.Register("d", "detectors", "", "Detector text file to use. (To be implemented...)", true,
 			false);
-	args.Register("f", "runlist", "", "Test file with runlist to load.", true,
+	args.Register("f", "runlist", "", "Test file with runlist to load. (To be implemented...)", true,
 			false);
 	args.Register("o", "output-file", "mcdata.root",
 			"Output file name for pseudo-data.", true, false);
@@ -311,6 +311,7 @@ void producemcdata(TChain* mcevents, TString ofname) {
 		}
 	}
 	mcdata.Write();
+	mctruth.Write();
 }
 
 void ClearVectorTPI(std::vector<TPulseIsland*>& v) {

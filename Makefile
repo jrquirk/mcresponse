@@ -39,7 +39,7 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.cc
 	$(CC) -c $(CCFLAGS) $< -o $@
 
 $(TDSLOC):
-	@rootcint $@ -c -f $(CCFLAGS) $(TINCLOC) $(LINKDEFINITIONS)
+	@rootcint $@ -c -f $(CCFLAGS) $(TINCLOC) $(TLINKDEFINITIONS)
 
 clean:
 	-rm -f $(OBJDIR)/*.o
