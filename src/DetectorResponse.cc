@@ -83,9 +83,8 @@ TPulseIsland* DetectorResponse::GetGaussianResponse(double e, double t,
 	for (; iSample < fNSamples; iSample++) {
 		adc = fPedestal
 				+ fPolarity
-						* std::floor(
-								((double) fMaxADC) / fMaxEnergy
-										* energies[iSample - nPreSamples]);
+						* (int) (((double) fMaxADC) / fMaxEnergy
+								* energies[iSample - nPreSamples]);
 		if (adc > fMaxADC)
 			adc = fMaxADC;
 		else if (adc < 0)
@@ -121,9 +120,8 @@ TPulseIsland* DetectorResponse::GetExponentialResponse(double e, double t,
 	for (; iSample < fNSamples; iSample++) {
 		adc = fPedestal
 				+ fPolarity
-						* std::floor(
-								((double) fMaxADC) / fMaxEnergy
-										* energies[iSample - nPreSamples]);
+						* (int) (((double) fMaxADC) / fMaxEnergy
+								* energies[iSample - nPreSamples]);
 		if (adc > fMaxADC)
 			adc = fMaxADC;
 		else if (adc < 0)
