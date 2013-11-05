@@ -20,7 +20,7 @@ TDEP = TPulseIsland TGlobalData TTrackerHit TEvent
 TINC = $(patsubst %,%.hh,$(TDEP))
 TINCLOC = $(patsubst %,$(INCDIR)/%,$(TINC))
 
-DEP = MCFileHandler ArgumentParser DetectorResponse $(TDEP)
+DEP = MCFileHandler ArgumentParser DetectorCharacteristics DetectorResponse $(TDEP)
 SRC = $(patsubst %,%.cc,$(DEP))
 INC = $(SRC:.cc=.hh)
 OBJ = $(SRC:.cc=.o)
@@ -36,6 +36,7 @@ $(NAME): $(NAME).cc $(INCLOC)
 	$(CC) -c $(CCFLAGS) $< -o $@.o
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cc
+	@mkdir -p $(OBJDIR)
 	$(CC) -c $(CCFLAGS) $< -o $@
 
 $(TDSLOC):

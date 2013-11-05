@@ -22,12 +22,16 @@ bool DetectorResponse::IsOverThreshold(double e) {
 }
 
 void DetectorResponse::SetPulseProperties(double rt, double dt, double s,
-		double th, int po) {
+		double th, int po, PulseType pt) {
 	fRiseTime = rt;
 	fDecayTime = dt;
 	fSigma = s;
 	fThreshold = th;
-	fPolarity = po;
+	if (po < 0)
+		fPolarity = -1;
+	else
+		fPolarity = 1;
+	fType = pt;
 }
 
 void DetectorResponse::SetDigitizationProperties(double f, double e, int nb,
@@ -45,6 +49,13 @@ void DetectorResponse::SetDigitizationProperties(double f, double e, int nb,
 void DetectorResponse::Noise(std::vector<int>& s) {
 	for (unsigned int i = 0; i < s.size(); i++)
 		s[i] += (int) fRandom.Gaus(0., fWhiteNoise);
+}
+
+TPulseIsland* DetectorResponse::GetResponse(double e, double t, const char* n) {
+	if (fType == FAST)
+		return GetExponentialResponse(e, t, n);
+	else
+		return GetGaussianResponse(e, t, n);
 }
 
 TPulseIsland* DetectorResponse::GetGaussianResponse(double e, double t,

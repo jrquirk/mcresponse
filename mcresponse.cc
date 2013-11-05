@@ -1,6 +1,7 @@
 #include "ArgumentParser.hh"
 #include "MCFileHandler.hh"
 #include "DetectorResponse.hh"
+#include "DetectorCharacteristics.hh"
 
 #include "TString.h"
 #include "TTree.h"
@@ -22,7 +23,7 @@
 void ClearVectorTPI(std::vector<TPulseIsland*>& v);
 void TimeOrderTPI(std::vector<TPulseIsland*>& v);
 void MergeTPI(std::vector<TPulseIsland*>& v);
-void producemcdata(TChain*, TString);
+void producemcdata(TChain*, DetectorCharacteristics&, TString);
 
 int main(int argc, char* argv[]) {
 
@@ -31,13 +32,18 @@ int main(int argc, char* argv[]) {
 			false);
 	args.Register("h", "help", "", "Print help message and exit.", false,
 			false);
-	args.Register("r", "runs", "", "Comma/Dash separated list of MC runs to produce data for. (ex: 203-567,1002,2700-3199)", true, true);
-	args.Register("d", "detectors", "", "Detector text file to use. (To be implemented...)", true,
-			false);
-	args.Register("f", "runlist", "", "Test file with runlist to load. (To be implemented...)", true,
+	args.Register("r", "runs", "",
+			"Comma/Dash separated list of MC runs to produce data for. (ex: 203-567,1002,2700-3199)",
+			true, true);
+	args.Register("d", "detectors", "",
+			"Detector text file to use. (To be implemented...)", true, false);
+	args.Register("f", "runlist", "",
+			"Test file with runlist to load. (To be implemented...)", true,
 			false);
 	args.Register("o", "output-file", "mcdata.root",
 			"Output file name for pseudo-data.", true, false);
+	args.Register("f", "input-file", "",
+			"Input file name with MC data (To be implemented...)", true, false);
 	args.Parse(argc, argv);
 
 	// Asked for help or error
@@ -53,6 +59,8 @@ int main(int argc, char* argv[]) {
 
 	std::string runs = args.Get("r");
 	std::string ofname = args.Get("o");
+	std::string detfname = args.Get("d");
+
 	MCFileHandler files;
 	if (!files.Register(runs)) {
 		std::cout << "Could not register runs!" << std::endl;
@@ -60,16 +68,23 @@ int main(int argc, char* argv[]) {
 	}
 	files.Load();
 
+	DetectorCharacteristics dets;
+	if(args.Enabled("d"))
+		dets.LoadFile(detfname);
+
+	dets.Print();
+
 	std::cout << "Output file: " << ofname << "." << std::endl;
 
 	TChain* runchain = files.GetEventChain();
-	producemcdata(runchain, TString(ofname));
+	producemcdata(runchain, dets, TString(ofname));
 
 	std::cout << "Succesfully reached the end of the program!" << std::endl;
 	return 0;
 }
 
-void producemcdata(TChain* mcevents, TString ofname) {
+void producemcdata(TChain* mcevents, DetectorCharacteristics& detchars,
+		TString ofname) {
 
 	// Parameters
 	const double beamtau = 100000.; // ns, 10 kHz beam
@@ -93,20 +108,29 @@ void producemcdata(TChain* mcevents, TString ofname) {
 	TTree mctruth("TruthTree_INCOMPLETE",
 			"Truth Information (Not Yet Implemented)");
 	mcdata.Branch("Event", "TGlobalData", &gData, 64000, 1);
-	std::vector<TPulseIsland*> musc, musca, targ_f, targ_s, veto, sil1_f,
-			sil1_s, sil2_f, sil2_s, scl, sir1_f, sir1_s, sir2_f, sir2_s, scr;
 
 	// Prepare detectors
-	DetectorResponse si_tfa, si_amp, sc;
-	si_tfa.SetPulseProperties(25., 50., 1000., 100., 1);
-	si_tfa.SetDigitizationProperties(0.170, 10000., 12, 0, 100, 20);
-	si_tfa.SetCalibration(10.);
-	si_amp.SetPulseProperties(500., 1000., 1000., 100., 1);
-	si_amp.SetDigitizationProperties(0.017, 10000., 12, 0, 100, 20);
-	si_amp.SetCalibration(3.);
-	sc.SetPulseProperties(5., 10., 1000., 100., -1);
-	sc.SetDigitizationProperties(0.170, 1000., 12, 4095, 100, 20);
-	sc.SetCalibration(5.);
+	std::vector<std::string> banknames;
+	banknames.push_back("MC00");
+	banknames.push_back("MCF1");
+	banknames.push_back("MCS1");
+	banknames.push_back("MC02");
+	banknames.push_back("MCF3");
+	banknames.push_back("MCS3");
+	banknames.push_back("MCF4");
+	banknames.push_back("MCS4");
+	banknames.push_back("MC05");
+	banknames.push_back("MCF6");
+	banknames.push_back("MCS6");
+	banknames.push_back("MCF7");
+	banknames.push_back("MCS7");
+	banknames.push_back("MC08");
+	banknames.push_back("MC11");
+	int nBanks = banknames.size();
+	std::vector<DetectorResponse> dets;
+	for (int iDet = 0; iDet < nBanks; iDet++)
+		dets.push_back(detchars.GetDetectorResponse(banknames[iDet]));
+	std::vector<std::vector<TPulseIsland*> > tpis(nBanks);
 
 	TRandom3 randtime;
 	int nEvt = mcevents->GetEntries();
@@ -121,106 +145,26 @@ void producemcdata(TChain* mcevents, TString ofname) {
 		if (iEvt % 10000 == 0)
 			std::cout << "Working on event " << iEvt << " of " << nEvt << "..."
 					<< std::endl;
+
+		// Finish a run
 		if (eventtimestamp > evtwindow) {
-			// Time order data
-			TimeOrderTPI(musc);
-			TimeOrderTPI(targ_f);
-			TimeOrderTPI(targ_s);
-			TimeOrderTPI(veto);
-			TimeOrderTPI(sil1_f);
-			TimeOrderTPI(sil1_s);
-			TimeOrderTPI(sil2_f);
-			TimeOrderTPI(sil2_s);
-			TimeOrderTPI(scl);
-			TimeOrderTPI(sir1_f);
-			TimeOrderTPI(sir1_s);
-			TimeOrderTPI(sir2_f);
-			TimeOrderTPI(sir2_s);
-			TimeOrderTPI(scr);
-			TimeOrderTPI(musca);
-			//Merge
-			MergeTPI(musc);
-			MergeTPI(targ_f);
-			MergeTPI(targ_s);
-			MergeTPI(veto);
-			MergeTPI(sil1_f);
-			MergeTPI(sil1_s);
-			MergeTPI(sil2_f);
-			MergeTPI(sil2_s);
-			MergeTPI(scl);
-			MergeTPI(sir1_f);
-			MergeTPI(sir1_s);
-			MergeTPI(sir2_f);
-			MergeTPI(sir2_s);
-			MergeTPI(scr);
-			MergeTPI(musca);
-			// Fill data structure
-			gData->fPulseIslandToChannelMap.insert(
-					std::pair<std::string, std::vector<TPulseIsland*> >("MC00",
-							musc));
-			gData->fPulseIslandToChannelMap.insert(
-					std::pair<std::string, std::vector<TPulseIsland*> >("MCF1",
-							targ_f));
-			gData->fPulseIslandToChannelMap.insert(
-					std::pair<std::string, std::vector<TPulseIsland*> >("MCS1",
-							targ_s));
-			gData->fPulseIslandToChannelMap.insert(
-					std::pair<std::string, std::vector<TPulseIsland*> >("MC02",
-							veto));
-			gData->fPulseIslandToChannelMap.insert(
-					std::pair<std::string, std::vector<TPulseIsland*> >("MCF3",
-							sil1_f));
-			gData->fPulseIslandToChannelMap.insert(
-					std::pair<std::string, std::vector<TPulseIsland*> >("MCS3",
-							sil1_s));
-			gData->fPulseIslandToChannelMap.insert(
-					std::pair<std::string, std::vector<TPulseIsland*> >("MCF4",
-							sil2_f));
-			gData->fPulseIslandToChannelMap.insert(
-					std::pair<std::string, std::vector<TPulseIsland*> >("MCS4",
-							sil2_s));
-			gData->fPulseIslandToChannelMap.insert(
-					std::pair<std::string, std::vector<TPulseIsland*> >("MC05",
-							scl));
-			gData->fPulseIslandToChannelMap.insert(
-					std::pair<std::string, std::vector<TPulseIsland*> >("MCF6",
-							sir1_f));
-			gData->fPulseIslandToChannelMap.insert(
-					std::pair<std::string, std::vector<TPulseIsland*> >("MCS6",
-							sir1_s));
-			gData->fPulseIslandToChannelMap.insert(
-					std::pair<std::string, std::vector<TPulseIsland*> >("MCF7",
-							sir2_f));
-			gData->fPulseIslandToChannelMap.insert(
-					std::pair<std::string, std::vector<TPulseIsland*> >("MCS7",
-							sir2_s));
-			gData->fPulseIslandToChannelMap.insert(
-					std::pair<std::string, std::vector<TPulseIsland*> >("MC08",
-							scr));
-			gData->fPulseIslandToChannelMap.insert(
-					std::pair<std::string, std::vector<TPulseIsland*> >("MC11",
-							musca));
+			// Time order data and merge those close in time
+			// Then add to global data pointer
+			for (int iDet = 0; iDet < nBanks; iDet++) {
+				TimeOrderTPI(tpis[iDet]);
+				MergeTPI(tpis[iDet]);
+				gData->fPulseIslandToChannelMap.insert(
+						std::pair<std::string, std::vector<TPulseIsland*> >(
+								banknames[iDet], tpis[iDet]));
+			}
 			mcdata.Fill();
 			// Clear data for reuse
 			eventtimestamp = 0.;
 			gData->fPulseIslandToChannelMap.clear();
-			ClearVectorTPI(musc);
-			ClearVectorTPI(musc);
-			ClearVectorTPI(musca);
-			ClearVectorTPI(targ_f);
-			ClearVectorTPI(targ_s);
-			ClearVectorTPI(veto);
-			ClearVectorTPI(sil1_f);
-			ClearVectorTPI(sil1_s);
-			ClearVectorTPI(sil2_f);
-			ClearVectorTPI(sil2_s);
-			ClearVectorTPI(scl);
-			ClearVectorTPI(sir1_f);
-			ClearVectorTPI(sir1_s);
-			ClearVectorTPI(sir2_f);
-			ClearVectorTPI(sir2_s);
-			ClearVectorTPI(scr);
+			for (int iDet = 0; iDet < nBanks; iDet++)
+				ClearVectorTPI(tpis[iDet]);
 		}
+
 		eventtimestamp += randtime.Exp(beamtau);
 		mcevents->GetEntry(iEvt);
 		nEDeps = ev->GetDetectorResponse(&p, &d, &e, &t);
@@ -236,74 +180,74 @@ void producemcdata(TChain* mcevents, TString ofname) {
 				iDep++;
 			}
 			if (det == 0) {
-				if (sc.IsOverThreshold(energy))
-					musc.push_back(
-							sc.GetExponentialResponse(energy,
-									time + eventtimestamp, "MC00"));
+				if (dets[0].IsOverThreshold(energy))
+					tpis[0].push_back(
+							dets[0].GetResponse(energy, time + eventtimestamp,
+									"MC00"));
 			} else if (det == 1) {
-				if (si_tfa.IsOverThreshold(energy))
-					targ_f.push_back(
-							si_tfa.GetExponentialResponse(energy,
+				if (dets[1].IsOverThreshold(energy))
+					tpis[1].push_back(
+							dets[1].GetResponse(energy,
 									time + eventtimestamp, "MCF1"));
-				if (si_amp.IsOverThreshold(energy))
-					targ_s.push_back(
-							si_amp.GetGaussianResponse(energy,
+				if (dets[2].IsOverThreshold(energy))
+					tpis[2].push_back(
+							dets[2].GetResponse(energy,
 									time + eventtimestamp, "MCS1"));
 			} else if (det == 2) {
-				if (sc.IsOverThreshold(energy))
-					veto.push_back(
-							sc.GetExponentialResponse(energy,
+				if (dets[3].IsOverThreshold(energy))
+					tpis[3].push_back(
+							dets[3].GetResponse(energy,
 									time + eventtimestamp, "MC02"));
 			} else if (det == 3) {
-				if (si_tfa.IsOverThreshold(energy))
-					sir1_f.push_back(
-							si_tfa.GetExponentialResponse(energy,
+				if (dets[4].IsOverThreshold(energy))
+					tpis[4].push_back(
+							dets[4].GetResponse(energy,
 									time + eventtimestamp, "MCF3"));
-				if (si_amp.IsOverThreshold(energy))
-					sir1_s.push_back(
-							si_amp.GetGaussianResponse(energy,
+				if (dets[5].IsOverThreshold(energy))
+					tpis[5].push_back(
+							dets[5].GetResponse(energy,
 									time + eventtimestamp, "MCS3"));
 			} else if (det == 4) {
-				if (si_tfa.IsOverThreshold(energy))
-					sir2_f.push_back(
-							si_tfa.GetExponentialResponse(energy,
+				if (dets[6].IsOverThreshold(energy))
+					tpis[6].push_back(
+							dets[6].GetResponse(energy,
 									time + eventtimestamp, "MCF4"));
-				if (si_amp.IsOverThreshold(energy))
-					sir2_s.push_back(
-							si_amp.GetGaussianResponse(energy,
+				if (dets[7].IsOverThreshold(energy))
+					tpis[7].push_back(
+							dets[7].GetResponse(energy,
 									time + eventtimestamp, "MCS4"));
 			} else if (det == 5) {
-				if (sc.IsOverThreshold(energy))
-					scr.push_back(
-							sc.GetExponentialResponse(energy,
+				if (dets[8].IsOverThreshold(energy))
+					tpis[8].push_back(
+							dets[8].GetResponse(energy,
 									time + eventtimestamp, "MC05"));
 			} else if (det == 6) {
-				if (si_tfa.IsOverThreshold(energy))
-					sil1_f.push_back(
-							si_tfa.GetExponentialResponse(energy,
+				if (dets[9].IsOverThreshold(energy))
+					tpis[9].push_back(
+							dets[9].GetResponse(energy,
 									time + eventtimestamp, "MCF6"));
-				if (si_amp.IsOverThreshold(energy))
-					sil1_s.push_back(
-							si_amp.GetGaussianResponse(energy,
+				if (dets[10].IsOverThreshold(energy))
+					tpis[10].push_back(
+							dets[10].GetResponse(energy,
 									time + eventtimestamp, "MCS6"));
 			} else if (det == 7) {
-				if (si_tfa.IsOverThreshold(energy))
-					sil2_f.push_back(
-							si_tfa.GetExponentialResponse(energy,
+				if (dets[11].IsOverThreshold(energy))
+					tpis[11].push_back(
+							dets[11].GetResponse(energy,
 									time + eventtimestamp, "MCF7"));
-				if (si_amp.IsOverThreshold(energy))
-					sil2_s.push_back(
-							si_amp.GetGaussianResponse(energy,
+				if (dets[12].IsOverThreshold(energy))
+					tpis[12].push_back(
+							dets[12].GetResponse(energy,
 									time + eventtimestamp, "MCS7"));
 			} else if (det == 8) {
-				if (sc.IsOverThreshold(energy))
-					scl.push_back(
-							sc.GetExponentialResponse(energy,
+				if (dets[13].IsOverThreshold(energy))
+					tpis[13].push_back(
+							dets[13].GetResponse(energy,
 									time + eventtimestamp, "MC08"));
 			} else if (det == 11) {
-				if (sc.IsOverThreshold(energy))
-					musca.push_back(
-							sc.GetExponentialResponse(energy,
+				if (dets[14].IsOverThreshold(energy))
+					tpis[14].push_back(
+							dets[14].GetResponse(energy,
 									time + eventtimestamp, "MC11"));
 			} else {
 				std::cout << "Error: Unknown detector:\t" << det << std::endl;

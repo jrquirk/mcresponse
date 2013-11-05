@@ -11,6 +11,12 @@ class TPulseIsland;
 class DetectorResponse {
 
 public:
+	enum PulseType {
+		FAST, // Sum of exponentials
+		SLOW  // Gaussian
+	};
+
+public:
 	DetectorResponse();
 	~DetectorResponse();
 
@@ -22,6 +28,7 @@ private:
 	double fSigma; // Width for Gaussian response (ns)
 	double fThreshold; // Threshold for triggering (keV)
 	int fPolarity; // Polarity of signal
+	PulseType fType; // Fast or slow
 	// Resolution and Noise //
 	double fWhiteNoise; // Uncertainty in any measurement (keV)
 	// Calibration
@@ -143,7 +150,7 @@ public:
 	 * th:			Threshold for triggering
 	 * po:			Polarity (+/- 1)
 	 */
-	void SetPulseProperties(double rt, double dt, double s, double th, int po);
+	void SetPulseProperties(double rt, double dt, double s, double th, int po, PulseType pt);
 	/* Properties of the digitizer
 	 * fr:			Frequency of digitization
 	 * maxen:		Energy ceiling in keV
@@ -163,10 +170,14 @@ public:
 	/* Return TPulseIsland pointer
 	 * Gaussian response use fSigma and just return a Gaussian (Slow)
 	 * Exponential response returns a sum of exponentials (Fast)
+	 * General one determines from pulse type
 	 * e:			Energy deposited in hit
 	 * t:			Time of first hit
 	 * n:			Bank name
 	 */
+public:
+	TPulseIsland* GetResponse(double e, double t, const char* n);
+private:
 	TPulseIsland* GetGaussianResponse(double e, double t, const char* n);
 	TPulseIsland* GetExponentialResponse(double e, double t, const char* n);
 };

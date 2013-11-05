@@ -24,5 +24,5 @@
 #pragma link C++ function operator!= (std::vector<TPulseIsland*>::iterator, std::vector<TPulseIsland*>::iterator);
 #pragma link C++ class std::map<std::string, std::vector<TPulseIsland*> >+;
 #pragma link C++ class std::map<std::string, std::vector<TPulseIsland*> >::iterator;
-#pragma link C++ class std::pair<std::string,std::vector<TPulseIsland*> >+;
+#pragma link C++ class std::pair<std::string, std::vector<TPulseIsland*> >+;
 #endif

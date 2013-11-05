@@ -1,8 +1,10 @@
 #ifndef PARAMETERGETTER_HH
 #define PARAMETERGETTER_HH
 
+#include "DetectorResponse.hh"
+
 #include <fstream>
-#include <map>
+#include <vector>
 
 class DetectorCharacteristics {
 
@@ -11,18 +13,16 @@ public:
   ~DetectorCharacteristics();
 
 private:
-  void LoadFile(std::string);
-
-
-private:
+  static char fCommentChar;
   bool fOK;
   std::string fFilename;
-  char fCommentChar;
   std::ifstream fFile;
+
+  static int fNDetectors;
 
   // The info
   std::vector<std::string> fBankName;
-  std::vector<bool> fFastPulse;
+  std::vector<DetectorResponse::PulseType> fPulseType;
   std::vector<double> fRiseTime;
   std::vector<double> fDecayTime;
   std::vector<double> fPulseWidth;
@@ -34,20 +34,12 @@ private:
   std::vector<int> fPedestal;
   std::vector<int> fNSamples;
   std::vector<int> fNPreSamples;
+  std::vector<double> fCalibration;
 
 public:
-  bool IsPulseFast(std::string);
-  double GetRiseTime(std::string);
-  double GetDecayTime(std::string);
-  double GetPulseWidth(std::string);
-  double GetEnergyThreshold(std::string);
-  bool IsPulsePositive(std::string);
-  double GetPulseFrequency(std::string);
-  double GetMaxEnergy(std::string);
-  int GetNBits(std::string);
-  int GetPedestal(std::string);
-  int GetNSamples(std::string);
-  int GetNPreSamples(std::string);
+  void Print();
+  void LoadFile(std::string);
+  DetectorResponse GetDetectorResponse(std::string);
 };
 
 

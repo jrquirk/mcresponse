@@ -16,8 +16,9 @@ void check(TString fname, TString channel) {
 	TTree* tr = (TTree*) f.Get("EventTree");
 	TGlobalData* gData = NULL;
 	tr->SetBranchAddress("Event", &gData);
-	TH1I pulse("pulse", "Pulse", 100, 0., 100.);
+	TH1I pulse("pulse", "Pulse ("+channel+");Time(ns);ADC", 100, 0., 100.);
 	pulse.SetStats(0);
+	pulse.GetYaxis()->SetRangeUser(0.,4096.);
 
 	std::string s;
 	std::vector<TPulseIsland*> p;
@@ -28,7 +29,6 @@ void check(TString fname, TString channel) {
 	for (int i = 0; i < n; i++) {
 		tr->GetEntry(i);
 		p = gData->fPulseIslandToChannelMap.at(channel.Data());
-		std::cout<<"Event "<<i<<":"<<std::endl;
 		for (unsigned int j = 0; j < p.size(); j++) {
 			tp = p.at(j);
 			tv = tp->GetSamples();
@@ -41,7 +41,7 @@ void check(TString fname, TString channel) {
 			pulse.Draw();
 			can->Update();
 			std::cout << std::endl;
-			usleep(500000);
+			usleep(50000);
 		}
 	}
 

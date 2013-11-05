@@ -6,13 +6,14 @@
 #include "TFile.h"
 #include "TRandom3.h"
 
-#include "rootlibs/TTrackerHit.h"
-#include "rootlibs/TEvent.h"
+#include "rootlibs/TTrackerHit.hh"
+#include "rootlibs/TEvent.hh"
 
-#include "rootlibs/TGlobalData.hh"
-#include "rootlibs/TPulseIsland.hh"
+#include "TGlobalData.hh"
+#include "TPulseIsland.hh"
 
-#include "src/DetectorResponse.cc"
+#include "include/DetectorResponse.hh"
+
 
 void ClearVectorTPI(std::vector<TPulseIsland*>& v);
 void TimeOrderTPI(std::vector<TPulseIsland*>& v);
