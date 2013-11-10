@@ -22,7 +22,7 @@
 
 void ClearVectorTPI(std::vector<TPulseIsland*>& v);
 void TimeOrderTPI(std::vector<TPulseIsland*>& v);
-void MergeTPI(std::vector<TPulseIsland*>& v);
+void MergeTPI(std::vector<TPulseIsland*>& v, int pedestal);
 void producemcdata(TChain*, DetectorCharacteristics&, TString);
 
 int main(int argc, char* argv[]) {
@@ -35,10 +35,10 @@ int main(int argc, char* argv[]) {
 	args.Register("r", "runs", "",
 			"Comma/Dash separated list of MC runs to produce data for. (ex: 203-567,1002,2700-3199)",
 			true, true);
-	args.Register("d", "detectors", "",
-			"Detector text file to use. (To be implemented...)", true, false);
+	args.Register("d", "detectors", "", "Detector text file to use.", true,
+			false);
 	args.Register("f", "runlist", "",
-			"Test file with runlist to load. (To be implemented...)", true,
+			"Text file with runlist to load. (To be implemented...)", true,
 			false);
 	args.Register("o", "output-file", "mcdata.root",
 			"Output file name for pseudo-data.", true, false);
@@ -69,7 +69,7 @@ int main(int argc, char* argv[]) {
 	files.Load();
 
 	DetectorCharacteristics dets;
-	if(args.Enabled("d"))
+	if (args.Enabled("d"))
 		dets.LoadFile(detfname);
 
 	dets.Print();
@@ -110,7 +110,7 @@ void producemcdata(TChain* mcevents, DetectorCharacteristics& detchars,
 	mcdata.Branch("Event", "TGlobalData", &gData, 64000, 1);
 
 	// Prepare detectors
-	std::vector<std::string> banknames;
+	std::vector < std::string > banknames;
 	banknames.push_back("MC00");
 	banknames.push_back("MCF1");
 	banknames.push_back("MCS1");
@@ -127,10 +127,10 @@ void producemcdata(TChain* mcevents, DetectorCharacteristics& detchars,
 	banknames.push_back("MC08");
 	banknames.push_back("MC11");
 	int nBanks = banknames.size();
-	std::vector<DetectorResponse> dets;
+	std::vector < DetectorResponse > dets;
 	for (int iDet = 0; iDet < nBanks; iDet++)
 		dets.push_back(detchars.GetDetectorResponse(banknames[iDet]));
-	std::vector<std::vector<TPulseIsland*> > tpis(nBanks);
+	std::vector < std::vector<TPulseIsland*> > tpis(nBanks);
 
 	TRandom3 randtime;
 	int nEvt = mcevents->GetEntries();
@@ -152,7 +152,7 @@ void producemcdata(TChain* mcevents, DetectorCharacteristics& detchars,
 			// Then add to global data pointer
 			for (int iDet = 0; iDet < nBanks; iDet++) {
 				TimeOrderTPI(tpis[iDet]);
-				MergeTPI(tpis[iDet]);
+				MergeTPI(tpis[iDet], dets[iDet].GetPedestal());
 				gData->fPulseIslandToChannelMap.insert(
 						std::pair<std::string, std::vector<TPulseIsland*> >(
 								banknames[iDet], tpis[iDet]));
@@ -187,68 +187,68 @@ void producemcdata(TChain* mcevents, DetectorCharacteristics& detchars,
 			} else if (det == 1) {
 				if (dets[1].IsOverThreshold(energy))
 					tpis[1].push_back(
-							dets[1].GetResponse(energy,
-									time + eventtimestamp, "MCF1"));
+							dets[1].GetResponse(energy, time + eventtimestamp,
+									"MCF1"));
 				if (dets[2].IsOverThreshold(energy))
 					tpis[2].push_back(
-							dets[2].GetResponse(energy,
-									time + eventtimestamp, "MCS1"));
+							dets[2].GetResponse(energy, time + eventtimestamp,
+									"MCS1"));
 			} else if (det == 2) {
 				if (dets[3].IsOverThreshold(energy))
 					tpis[3].push_back(
-							dets[3].GetResponse(energy,
-									time + eventtimestamp, "MC02"));
+							dets[3].GetResponse(energy, time + eventtimestamp,
+									"MC02"));
 			} else if (det == 3) {
 				if (dets[4].IsOverThreshold(energy))
 					tpis[4].push_back(
-							dets[4].GetResponse(energy,
-									time + eventtimestamp, "MCF3"));
+							dets[4].GetResponse(energy, time + eventtimestamp,
+									"MCF3"));
 				if (dets[5].IsOverThreshold(energy))
 					tpis[5].push_back(
-							dets[5].GetResponse(energy,
-									time + eventtimestamp, "MCS3"));
+							dets[5].GetResponse(energy, time + eventtimestamp,
+									"MCS3"));
 			} else if (det == 4) {
 				if (dets[6].IsOverThreshold(energy))
 					tpis[6].push_back(
-							dets[6].GetResponse(energy,
-									time + eventtimestamp, "MCF4"));
+							dets[6].GetResponse(energy, time + eventtimestamp,
+									"MCF4"));
 				if (dets[7].IsOverThreshold(energy))
 					tpis[7].push_back(
-							dets[7].GetResponse(energy,
-									time + eventtimestamp, "MCS4"));
+							dets[7].GetResponse(energy, time + eventtimestamp,
+									"MCS4"));
 			} else if (det == 5) {
 				if (dets[8].IsOverThreshold(energy))
 					tpis[8].push_back(
-							dets[8].GetResponse(energy,
-									time + eventtimestamp, "MC05"));
+							dets[8].GetResponse(energy, time + eventtimestamp,
+									"MC05"));
 			} else if (det == 6) {
 				if (dets[9].IsOverThreshold(energy))
 					tpis[9].push_back(
-							dets[9].GetResponse(energy,
-									time + eventtimestamp, "MCF6"));
+							dets[9].GetResponse(energy, time + eventtimestamp,
+									"MCF6"));
 				if (dets[10].IsOverThreshold(energy))
 					tpis[10].push_back(
-							dets[10].GetResponse(energy,
-									time + eventtimestamp, "MCS6"));
+							dets[10].GetResponse(energy, time + eventtimestamp,
+									"MCS6"));
 			} else if (det == 7) {
 				if (dets[11].IsOverThreshold(energy))
 					tpis[11].push_back(
-							dets[11].GetResponse(energy,
-									time + eventtimestamp, "MCF7"));
+							dets[11].GetResponse(energy, time + eventtimestamp,
+									"MCF7"));
 				if (dets[12].IsOverThreshold(energy))
 					tpis[12].push_back(
-							dets[12].GetResponse(energy,
-									time + eventtimestamp, "MCS7"));
+							dets[12].GetResponse(energy, time + eventtimestamp,
+									"MCS7"));
 			} else if (det == 8) {
 				if (dets[13].IsOverThreshold(energy))
 					tpis[13].push_back(
-							dets[13].GetResponse(energy,
-									time + eventtimestamp, "MC08"));
+							dets[13].GetResponse(energy, time + eventtimestamp,
+									"MC08"));
 			} else if (det == 11) {
 				if (dets[14].IsOverThreshold(energy))
 					tpis[14].push_back(
-							dets[14].GetResponse(energy,
-									time + eventtimestamp, "MC11"));
+							dets[14].GetResponse(energy, time + eventtimestamp,
+									"MC11"));
 			} else {
 				std::cout << "Error: Unknown detector:\t" << det << std::endl;
 			}
@@ -291,7 +291,7 @@ void TimeOrderTPI(std::vector<TPulseIsland*>& v) {
 	}
 }
 
-void MergeTPI(std::vector<TPulseIsland*>& v) {
+void MergeTPI(std::vector<TPulseIsland*>& v, int pedestal) {
 	static TPulseIsland* pTPI;
 	static int nSamp;
 	static unsigned int i;
@@ -314,7 +314,7 @@ void MergeTPI(std::vector<TPulseIsland*>& v) {
 			std::vector<int> s2 = v.at(i + 1)->GetSamples();
 			std::vector<int> s1 = v.at(i)->GetSamples();
 			for (j = dt; j < nSamp; j++)
-				s1[j] += s2[j - dt];
+				s1[j] += s2[j - dt] - pedestal;
 			delete v.at(i);
 			delete v.at(i + 1);
 			v[i] = new TPulseIsland(t, s1, tick, name);
