@@ -92,8 +92,8 @@ TPulseIsland* DetectorResponse::GetGaussianResponse(double e, double t,
 		samples.push_back(adc);
 	}
 	Noise(samples);
-	return new TPulseIsland(t / fTickLength - nPreSamples, samples, fTickLength,
-			name);
+	return new TPulseIsland((int) (t / fTickLength) - nPreSamples, samples,
+			fTickLength, name);
 }
 
 TPulseIsland* DetectorResponse::GetExponentialResponse(double e, double t,
@@ -129,6 +129,6 @@ TPulseIsland* DetectorResponse::GetExponentialResponse(double e, double t,
 		samples.push_back(adc);
 	}
 	Noise(samples);
-	return new TPulseIsland(t / fTickLength - nPreSamples, samples, fTickLength,
-			name);
+	return new TPulseIsland((int) (t / fTickLength) - nPreSamples, samples,
+			fTickLength, name);
 }
