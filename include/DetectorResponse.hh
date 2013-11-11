@@ -7,13 +7,12 @@
 
 class TPulseIsland;
 
-
 class DetectorResponse {
 
 public:
 	enum PulseType {
 		FAST, // Sum of exponentials
-		SLOW  // Gaussian
+		SLOW // Gaussian
 	};
 
 public:
@@ -150,7 +149,8 @@ public:
 	 * th:			Threshold for triggering
 	 * po:			Polarity (+/- 1)
 	 */
-	void SetPulseProperties(double rt, double dt, double s, double th, int po, PulseType pt);
+	void SetPulseProperties(double rt, double dt, double s, double th, int po,
+			PulseType pt);
 	/* Properties of the digitizer
 	 * fr:			Frequency of digitization
 	 * maxen:		Energy ceiling in keV
@@ -165,8 +165,6 @@ public:
 private:
 	void Noise(std::vector<int>& s);
 
-public:
-	bool IsOverThreshold(double e);
 	/* Return TPulseIsland pointer
 	 * Gaussian response use fSigma and just return a Gaussian (Slow)
 	 * Exponential response returns a sum of exponentials (Fast)
@@ -176,10 +174,10 @@ public:
 	 * n:			Bank name
 	 */
 public:
-	TPulseIsland* GetResponse(double e, double t, const char* n);
+	TPulseIsland* GetResponse(double e, double t, std::string& n);
 private:
-	TPulseIsland* GetGaussianResponse(double e, double t, const char* n);
-	TPulseIsland* GetExponentialResponse(double e, double t, const char* n);
+	int GetGaussianResponse(double, std::vector<double>&);
+	int GetExponentialResponse(double, std::vector<double>&);
 };
 
 #endif

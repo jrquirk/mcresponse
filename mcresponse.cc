@@ -37,9 +37,6 @@ int main(int argc, char* argv[]) {
 			true, true);
 	args.Register("d", "detectors", "", "Detector text file to use.", true,
 			false);
-	args.Register("f", "runlist", "",
-			"Text file with runlist to load. (To be implemented...)", true,
-			false);
 	args.Register("o", "output-file", "mcdata.root",
 			"Output file name for pseudo-data.", true, false);
 	args.Register("f", "input-file", "",
@@ -60,11 +57,16 @@ int main(int argc, char* argv[]) {
 	std::string runs = args.Get("r");
 	std::string ofname = args.Get("o");
 	std::string detfname = args.Get("d");
+	std::string rfname = args.Get("f");
 
 	MCFileHandler files;
-	if (!files.Register(runs)) {
-		std::cout << "Could not register runs!" << std::endl;
-		return 2;
+	if (args.Enabled("f")) {
+		files.RegisterFile(rfname);
+	} else {
+		if (!files.Register(runs)) {
+			std::cout << "Could not register runs!" << std::endl;
+			return 2;
+		}
 	}
 	files.Load();
 
@@ -138,6 +140,7 @@ void producemcdata(TChain* mcevents, DetectorCharacteristics& detchars,
 
 	int det;
 	double energy, time;
+	TPulseIsland* tmpTPI;
 
 	double eventtimestamp = 0.;
 
@@ -180,75 +183,60 @@ void producemcdata(TChain* mcevents, DetectorCharacteristics& detchars,
 				iDep++;
 			}
 			if (det == 0) {
-				if (dets[0].IsOverThreshold(energy))
-					tpis[0].push_back(
-							dets[0].GetResponse(energy, time + eventtimestamp,
-									"MC00"));
+				if ((tmpTPI = dets[0].GetResponse(energy, time + eventtimestamp,
+						banknames[0])))
+					tpis[0].push_back(tmpTPI);
 			} else if (det == 1) {
-				if (dets[1].IsOverThreshold(energy))
-					tpis[1].push_back(
-							dets[1].GetResponse(energy, time + eventtimestamp,
-									"MCF1"));
-				if (dets[2].IsOverThreshold(energy))
-					tpis[2].push_back(
-							dets[2].GetResponse(energy, time + eventtimestamp,
-									"MCS1"));
+				if ((tmpTPI = dets[1].GetResponse(energy, time + eventtimestamp,
+						banknames[1])))
+					tpis[1].push_back(tmpTPI);
+				if ((tmpTPI = dets[2].GetResponse(energy, time + eventtimestamp,
+						banknames[2])))
+					tpis[2].push_back(tmpTPI);
 			} else if (det == 2) {
-				if (dets[3].IsOverThreshold(energy))
-					tpis[3].push_back(
-							dets[3].GetResponse(energy, time + eventtimestamp,
-									"MC02"));
+				if ((tmpTPI = dets[3].GetResponse(energy, time + eventtimestamp,
+						banknames[3])))
+					tpis[3].push_back(tmpTPI);
 			} else if (det == 3) {
-				if (dets[4].IsOverThreshold(energy))
-					tpis[4].push_back(
-							dets[4].GetResponse(energy, time + eventtimestamp,
-									"MCF3"));
-				if (dets[5].IsOverThreshold(energy))
-					tpis[5].push_back(
-							dets[5].GetResponse(energy, time + eventtimestamp,
-									"MCS3"));
+				if ((tmpTPI = dets[4].GetResponse(energy, time + eventtimestamp,
+						banknames[4])))
+					tpis[4].push_back(tmpTPI);
+				if ((tmpTPI = dets[5].GetResponse(energy, time + eventtimestamp,
+						banknames[5])))
+					tpis[5].push_back(tmpTPI);
 			} else if (det == 4) {
-				if (dets[6].IsOverThreshold(energy))
-					tpis[6].push_back(
-							dets[6].GetResponse(energy, time + eventtimestamp,
-									"MCF4"));
-				if (dets[7].IsOverThreshold(energy))
-					tpis[7].push_back(
-							dets[7].GetResponse(energy, time + eventtimestamp,
-									"MCS4"));
+				if ((tmpTPI = dets[6].GetResponse(energy, time + eventtimestamp,
+						banknames[6])))
+					tpis[6].push_back(tmpTPI);
+				if ((tmpTPI = dets[7].GetResponse(energy, time + eventtimestamp,
+						banknames[7])))
+					tpis[7].push_back(tmpTPI);
 			} else if (det == 5) {
-				if (dets[8].IsOverThreshold(energy))
-					tpis[8].push_back(
-							dets[8].GetResponse(energy, time + eventtimestamp,
-									"MC05"));
+				if ((tmpTPI = dets[8].GetResponse(energy, time + eventtimestamp,
+						banknames[8])))
+					tpis[8].push_back(tmpTPI);
 			} else if (det == 6) {
-				if (dets[9].IsOverThreshold(energy))
-					tpis[9].push_back(
-							dets[9].GetResponse(energy, time + eventtimestamp,
-									"MCF6"));
-				if (dets[10].IsOverThreshold(energy))
-					tpis[10].push_back(
-							dets[10].GetResponse(energy, time + eventtimestamp,
-									"MCS6"));
+				if ((tmpTPI = dets[9].GetResponse(energy, time + eventtimestamp,
+						banknames[9])))
+					tpis[9].push_back(tmpTPI);
+				if ((tmpTPI = dets[10].GetResponse(energy, time + eventtimestamp,
+						banknames[10])))
+					tpis[10].push_back(tmpTPI);
 			} else if (det == 7) {
-				if (dets[11].IsOverThreshold(energy))
-					tpis[11].push_back(
-							dets[11].GetResponse(energy, time + eventtimestamp,
-									"MCF7"));
-				if (dets[12].IsOverThreshold(energy))
-					tpis[12].push_back(
-							dets[12].GetResponse(energy, time + eventtimestamp,
-									"MCS7"));
+				if ((tmpTPI = dets[11].GetResponse(energy, time + eventtimestamp,
+						banknames[11])))
+					tpis[11].push_back(tmpTPI);
+				if ((tmpTPI = dets[12].GetResponse(energy, time + eventtimestamp,
+						banknames[12])))
+					tpis[12].push_back(tmpTPI);
 			} else if (det == 8) {
-				if (dets[13].IsOverThreshold(energy))
-					tpis[13].push_back(
-							dets[13].GetResponse(energy, time + eventtimestamp,
-									"MC08"));
+				if ((tmpTPI = dets[13].GetResponse(energy, time + eventtimestamp,
+						banknames[13])))
+					tpis[13].push_back(tmpTPI);
 			} else if (det == 11) {
-				if (dets[14].IsOverThreshold(energy))
-					tpis[14].push_back(
-							dets[14].GetResponse(energy, time + eventtimestamp,
-									"MC11"));
+				if ((tmpTPI = dets[14].GetResponse(energy, time + eventtimestamp,
+						banknames[14])))
+					tpis[14].push_back(tmpTPI);
 			} else {
 				std::cout << "Error: Unknown detector:\t" << det << std::endl;
 			}

@@ -17,10 +17,6 @@ DetectorResponse::DetectorResponse() :
 DetectorResponse::~DetectorResponse() {
 }
 
-bool DetectorResponse::IsOverThreshold(double e) {
-	return e > fThreshold;
-}
-
 void DetectorResponse::SetPulseProperties(double rt, double dt, double s,
 		double th, int po, PulseType pt) {
 	fRiseTime = rt;
@@ -51,40 +47,39 @@ void DetectorResponse::Noise(std::vector<int>& s) {
 		s[i] += (int) fRandom.Gaus(0., fWhiteNoise);
 }
 
-TPulseIsland* DetectorResponse::GetResponse(double e, double t, const char* n) {
+TPulseIsland* DetectorResponse::GetResponse(double e, double t, std::string& name) {
+	// Get energy vector
+	// Return NULL pointer if never goes over threshold
+	std::vector<double> energies;
+	int sampleOver;
 	if (fType == FAST)
-		return GetExponentialResponse(e, t, n);
+		sampleOver = GetExponentialResponse(e, energies);
 	else
-		return GetGaussianResponse(e, t, n);
-}
+		sampleOver = GetGaussianResponse(e, energies);
+	if (sampleOver == -1)
+		return NULL;
 
-TPulseIsland* DetectorResponse::GetGaussianResponse(double e, double t,
-		const char* n) {
-	std::string name(n);
+	// Turn into ADC samples
+	double conv = (double) fMaxADC / fMaxEnergy;
+	int iSample, adc;
+	/* If the pulse starts and goes over threshold in fewer than the
+	 * amount of pretrigger samples we take, we fill the space before
+	 * the pulse starts with the pedestal. If the pulse starts well
+	 * before fNPreSamples before the trigger threshold,
+	 * we lose some of the pulse. 
+	 */
 	std::vector<int> samples;
-	std::vector<double> energies;
-	int iSample;
-	int adc;
-	int sampleOver = -1;
-	double loct = 0.;
-	for (iSample = 0; iSample < fNSamples; iSample++) {
-		energies.push_back(
-				fCalibration * e
-						* std::exp(
-								-std::pow(loct - 3. * fSigma, 2)
-										/ (2 * std::pow(fSigma, 2))));
-		loct += fTickLength;
-		if (sampleOver < 0 && IsOverThreshold(energies.at(iSample)))
-			sampleOver = iSample;
-	}
 	int nPreSamples = fNPreSamples - sampleOver;
-	for (iSample = 0; iSample < nPreSamples; iSample++)
-		samples.push_back(fPedestal);
+	if (nPreSamples > 0) {
+		samples = std::vector<int>(nPreSamples, fPedestal);
+		iSample = nPreSamples;
+	} else {
+		iSample = 0;
+	}
+
 	for (; iSample < fNSamples; iSample++) {
-		adc = fPedestal
-				+ fPolarity
-						* (int) (((double) fMaxADC) / fMaxEnergy
-								* energies[iSample - nPreSamples]);
+		adc = (int) (conv * energies[iSample - nPreSamples]);
+		adc = fPedestal + fPolarity * adc;
 		if (adc > fMaxADC)
 			adc = fMaxADC;
 		else if (adc < 0)
@@ -96,39 +91,37 @@ TPulseIsland* DetectorResponse::GetGaussianResponse(double e, double t,
 			fTickLength, name);
 }
 
-TPulseIsland* DetectorResponse::GetExponentialResponse(double e, double t,
-		const char* n) {
-	std::string name(n);
-	std::vector<int> samples;
-	std::vector<double> energies;
-	int iSample;
-	int adc;
+int DetectorResponse::GetGaussianResponse(double e,
+		std::vector<double>& energies) {
+	energies.clear();
 	int sampleOver = -1;
-	double loct = 0.;
-	for (iSample = 0; iSample < fNSamples; iSample++) {
-		energies.push_back(
-				fCalibration * e
-						* (std::exp(-loct / fDecayTime)
-								- std::exp(-loct / fRiseTime)));
-		loct += fTickLength;
-		if (sampleOver < 0 && IsOverThreshold(energies.at(iSample)))
+	double energy;
+	double t = 0.; 
+	double sigsq2 = 2 * std::pow(fSigma, 2);
+	for (int iSample = 0; iSample < fNSamples; iSample++) {
+		energy = std::exp(-std::pow(t - 3. * fSigma, 2) / sigsq2);
+		energy *= fCalibration * e;
+		energies.push_back(energy);
+		t += fTickLength;
+		if (sampleOver < 0 && energy > fThreshold)
 			sampleOver = iSample;
 	}
-	int nPreSamples = fNPreSamples - sampleOver;
-	for (iSample = 0; iSample < nPreSamples; iSample++)
-		samples.push_back(fPedestal);
-	for (; iSample < fNSamples; iSample++) {
-		adc = fPedestal
-				+ fPolarity
-						* (int) (((double) fMaxADC) / fMaxEnergy
-								* energies[iSample - nPreSamples]);
-		if (adc > fMaxADC)
-			adc = fMaxADC;
-		else if (adc < 0)
-			adc = 0;
-		samples.push_back(adc);
+	return sampleOver;
+}
+
+int DetectorResponse::GetExponentialResponse(double e,
+		std::vector<double>& energies) {
+	energies.clear();
+	int sampleOver = -1;
+	double energy;
+	double t = 0.;
+	for (int iSample = 0; iSample < fNSamples; iSample++) {
+		energy = std::exp(-t/fDecayTime) - std::exp(-t/fRiseTime);
+		energy *= fCalibration * e;
+		energies.push_back(energy);
+		t += fTickLength;
+		if (sampleOver < 0 && energy > fThreshold)
+			sampleOver = iSample;
 	}
-	Noise(samples);
-	return new TPulseIsland((int) (t / fTickLength) - nPreSamples, samples,
-			fTickLength, name);
+	return sampleOver;
 }
