@@ -87,7 +87,7 @@ TPulseIsland* DetectorResponse::GetResponse(double e, double t, std::string& nam
 		samples.push_back(adc);
 	}
 	Noise(samples);
-	return new TPulseIsland((int) (t / fTickLength) - nPreSamples, samples,
+	return new TPulseIsland((int) (t / fTickLength), samples,
 			fTickLength, name);
 }
 

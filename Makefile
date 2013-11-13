@@ -20,7 +20,7 @@ TDEP = TPulseIsland TGlobalData TTrackerHit TEvent
 TINC = $(patsubst %,%.hh,$(TDEP))
 TINCLOC = $(patsubst %,$(INCDIR)/%,$(TINC))
 
-DEP = MCFileHandler ArgumentParser DetectorCharacteristics DetectorResponse $(TDEP)
+DEP = MCFileHandler ArgumentParser DetectorCharacteristics DetectorResponse PseudoDataHandler $(TDEP)
 SRC = $(patsubst %,%.cc,$(DEP))
 INC = $(SRC:.cc=.hh)
 OBJ = $(SRC:.cc=.o)
