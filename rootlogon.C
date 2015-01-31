@@ -4,5 +4,5 @@
   gROOT->ProcessLine(".L rootlibs/TEvent.cpp+");
   gROOT->ProcessLine(".L rootlibs/TPulseIsland.cpp+");
   gROOT->ProcessLine(".L rootlibs/TGlobalData.cpp+");
-  gROOT->ProcessLine(".L scripts/check.c+");
+  gROOT->ProcessLine(".L scripts/check.c+***HI JOHN DAN WAS HERE&***);
 }
